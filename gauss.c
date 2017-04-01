@@ -3,6 +3,8 @@
 #define TAILLE_MAX 10
 typedef struct{
 	float *matrice;
+	float *solution;
+	int *varLibre;
 	int nbColonne;
 	int nbLigne;
 }gauss;
@@ -12,8 +14,14 @@ typedef struct{
 */
 
 void allouTabMat(gauss *p){
-	int nbCase=p->nbColonne*p->nbLigne;
+	int nbCase=p->nbColonne*p->nbLigne, i;
 	p->matrice=malloc(nbCase*sizeof(float));
+	p->solution=malloc((p->nbColonne-1)*sizeof(float));
+	for(i=0; i<p->nbColonne-1; i++)
+		p->solution[i]=0;
+	p->varLibre=malloc((p->nbColonne-1)*sizeof(int));
+	for(i=0; i<p->nbColonne-1; i++)
+		p->varLibre[i]=0;
 }
 
 /*
@@ -22,6 +30,7 @@ void allouTabMat(gauss *p){
 
 void libereTabMat(gauss *p){
 	free(p->matrice);
+	free(p->solution);
 }
 
 /*
@@ -124,7 +133,7 @@ int choixPivot(gauss *p, int col){
 		for(i=col+1; i<p->nbLigne; i++){
 			if(p->matrice[i*p->nbColonne]!=0){
 				permuteLigne(p, i, 0);
-				return 2;	//On retourne 2 si on a trouvé un pivot et qu'on a permuté deux lignes.
+				return 1;	//On retourne si on a trouvé un pivot et qu'on a permuté deux lignes.
 			}
 		}
 	}
@@ -135,19 +144,113 @@ int choixPivot(gauss *p, int col){
 * 2ème étape qui consiste à éliminer toutes les valeurs non nulles en dessous du pivot
 */
 
-void eliminationGauss(gauss *p){
-	int i;
-	for (i=1; i<p->nbLigne; i++)
-		p->matrice[i*p->nbColonne]=p->matrice[i*p->nbColonne]-(p->matrice[i*p->nbColonne]/p->matrice[0])*p->matrice[0];
+void eliminationGauss(gauss *p, int colonne){
+	int i, j;
+	float elimine;
+	for (i=colonne+1; i<p->nbLigne; i++){
+		elimine=p->matrice[i*p->nbColonne+colonne]/p->matrice[colonne*p->nbColonne+colonne];
+		for(j=colonne;j<p->nbColonne; j++)
+			p->matrice[i*p->nbColonne+j]=p->matrice[i*p->nbColonne+j]-elimine*p->matrice[colonne*p->nbColonne+j];
+	}
 	affichage(p);
+}
+
+/*
+* Fonction boucle qui va effectuer l'élimination tant que l'on peut
+*/
+
+void boucle(gauss *p){
+	int i;
+	for (i=0; i<p->nbColonne-1; i++){
+		if(choixPivot(p, i)==1)
+			eliminationGauss(p, i);
+	}
+}
+
+/*
+* Fonction qui verifie que l'on a pas de ligne du type 0 0 0 b ou b!=0
+*/
+
+int systemIncomp(gauss *p){
+	int i, j, compteur=0;
+	for (i=0; i<p->nbLigne; i++){
+		for(j=0; j<p->nbColonne-1; j++){
+			if(p->matrice[i*p->nbColonne+j]==0)
+				compteur++;
+		}
+		if(compteur==p->nbColonne-1 && p->matrice[i*p->nbColonne+p->nbColonne-1]!=0)
+			return 0;		//On retourne 0 si b est différent de 0 et que toutes les autres valeurs de la ligne sont différentes de 0
+	}
+	return 1;				//On retourne 1 si on a pas trouvé de ligne du type 0 0 0 b ou b!=0
+}
+
+/*
+* Fonction qui va vérifier si on a des variables libres dans notre matrice échelonné. On retourne le nombre de variable libre.
+*/
+
+int valLibre(gauss *p){
+	int i, j, compteurLigne=0, compteurVar=0;
+	for(i=0; i<p->nbLigne; i++){
+		for(j=0; j<p->nbColonne; j++){
+			if(p->matrice[i*p->nbColonne+j]==0)
+				compteurVar++;			//On incrémente compteurVar si sur la ligne on trouve une valeur qui est égale à 0
+		}
+		if(compteurVar==p->nbColonne){
+			compteurLigne++;			//On incrémente compteLigne si toutes les valeurs d'une ligne est égale à 0
+			p->varLibre[i]++;
+		}
+		compteurVar=0;
+	}
+	return compteurLigne;				//On retourne le nombre de variable libre
+}
+
+/*
+* Fonction solution qui va calculer les solutions du systeme compatible
+*/
+
+void solution(gauss *p){
+	int i, j;
+	float somme;
+	p->solution[p->nbColonne-2]=p->matrice[(p->nbColonne*p->nbLigne)-1]/p->matrice[(p->nbColonne*p->nbLigne)-2];	//On rempli déjà X[nbColonne-1]
+	for(i=p->nbColonne-3 ; i>=0 ;i--){			
+           somme = 0 ;
+           for(j=p->nbColonne-2; j>i; j--)
+              somme=somme+p->matrice[i*p->nbColonne+j]*p->solution[j] ;
+           p->solution[i]=(p->matrice[i*p->nbColonne+p->nbColonne-1]-somme)/p->matrice[i*p->nbColonne+i] ;
+    }
+    printf("Solutions :\n");
+	for (i=0; i<p->nbColonne-1; i++)
+		printf("X%d : %f\n", i+1, p->solution[i]);
+	printf("\n");
+}
+
+/*
+* Fonction infiniteSolution qui va afficher les solutions pour le système qui admet une infinité de solution.
+*/
+
+void infiniteSolution(gauss *p){
+	printf("Il y a une ou plusieurs qui sont :\n");
+	int i;
+	for(i=0; i<p->nbColonne-1; i++){
+		if(p->varLibre[i]==1)
+			printf("X%d : %d\n", i, p->varLibre[i]);
+	}
+
 }
 
 int main(){
 	gauss p;
 	if(recupInfoColLign(&p)==0)
 		return 0;
-	choixPivot(&p, 0);
-	eliminationGauss(&p);
+	boucle(&p);
+	if(systemIncomp(&p)==0){
+		printf("Systeme incompatible car il y a une ligne du type 0 0 0 b ou b!=0.\n");
+		return 0;
+	}
+	if(valLibre(&p)==0)
+		solution(&p);
+	else
+		infiniteSolution(&p);
 	libereTabMat(&p);
 	return 0;
 }
