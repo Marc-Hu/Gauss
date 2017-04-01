@@ -119,38 +119,41 @@ void permuteLigne(gauss *p, int ligne1, int ligne2){
 * Fonction qui va choisir un pivot pour la suite
 */
 
-int choixPivot(gauss *p, int col){
+char choixPivot(gauss *p, int col){
 	int i, compteur=0;
-	for (i=0; i<p->nbLigne; i++){		//Cette boucle permet de savoir si les valeurs de la première colonne sont égales à zéros. Si c'est le cas alors on incrémente le compteur
+	for (i=col; i<p->nbLigne; i++){		//Cette boucle permet de savoir si les valeurs de la première colonne sont égales à zéros. Si c'est le cas alors on incrémente le compteur
 		if (p->matrice[i*p->nbColonne+col]==0)
 			compteur++;
 	}
-	if (compteur==p->nbLigne)
-		return 0;			//Si le compteur est au maximum c'est à dire si toutes la première colonne contient que des zéros alors on retourne 0
+	if (compteur==p->nbLigne-col)
+		return 'f';			//Si le compteur est au maximum c'est à dire si toutes la première colonne contient que des zéros alors on retourne 0
 	if (p->matrice[col*p->nbColonne+col]!=0)
-		return 1;			//On retourne 1 si le premier terme de la matrice est différent de zéro
+		return 'v';			//On retourne 1 si le premier terme de la matrice est différent de zéro
 	else{
 		for(i=col+1; i<p->nbLigne; i++){
 			if(p->matrice[i*p->nbColonne]!=0){
 				permuteLigne(p, i, 0);
-				return 1;	//On retourne si on a trouvé un pivot et qu'on a permuté deux lignes.
+				return 'v';	//On retourne si on a trouvé un pivot et qu'on a permuté deux lignes.
 			}
 		}
 	}
-	return 1;
+	return 'v';
 }
 
 /*
 * 2ème étape qui consiste à éliminer toutes les valeurs non nulles en dessous du pivot
 */
 
-void eliminationGauss(gauss *p, int colonne){
-	int i, j;
+void eliminationGauss(gauss *p, int colonne, int decalage){
+	int i, j, decal=decalage*p->nbColonne;
 	float elimine;
-	for (i=colonne+1; i<p->nbLigne; i++){
-		elimine=p->matrice[i*p->nbColonne+colonne]/p->matrice[colonne*p->nbColonne+colonne];
+	for (i=colonne+1-decalage; i<p->nbLigne; i++){
+		if(p->matrice[i*p->nbColonne+colonne]!=0 && p->matrice[colonne*p->nbColonne+colonne-decal]!=0)
+			elimine=p->matrice[i*p->nbColonne+colonne]/p->matrice[colonne*p->nbColonne+colonne-decal];
+		else
+			elimine=0;
 		for(j=colonne;j<p->nbColonne; j++)
-			p->matrice[i*p->nbColonne+j]=p->matrice[i*p->nbColonne+j]-elimine*p->matrice[colonne*p->nbColonne+j];
+			p->matrice[i*p->nbColonne+j]=p->matrice[i*p->nbColonne+j]-elimine*p->matrice[colonne*p->nbColonne+j-decal];
 	}
 	affichage(p);
 }
@@ -160,10 +163,12 @@ void eliminationGauss(gauss *p, int colonne){
 */
 
 void boucle(gauss *p){
-	int i;
+	int i, j=0;
 	for (i=0; i<p->nbColonne-1; i++){
-		if(choixPivot(p, i)==1)
-			eliminationGauss(p, i);
+		if(choixPivot(p, i)=='v')
+			eliminationGauss(p, i, j);
+		else
+			j++;
 	}
 }
 
