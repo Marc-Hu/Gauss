@@ -1,9 +1,11 @@
 #include<stdio.h>
 #include<stdlib.h>
+#include<string.h>
 #define TAILLE_MAX 10
 typedef struct{
 	float *matrice;
 	float *solution;
+	char **infiniSol;
 	int *varLibre;
 	int nbColonne;
 	int nbLigne;
@@ -15,6 +17,7 @@ typedef struct{
 
 void allouTabMat(gauss *p){
 	int nbCase=p->nbColonne*p->nbLigne, i;
+	char *c=malloc(20*sizeof(char));
 	p->matrice=malloc(nbCase*sizeof(float));
 	p->solution=malloc((p->nbColonne-1)*sizeof(float));
 	for(i=0; i<p->nbColonne-1; i++)
@@ -22,6 +25,9 @@ void allouTabMat(gauss *p){
 	p->varLibre=malloc((p->nbColonne-1)*sizeof(int));
 	for(i=0; i<p->nbColonne-1; i++)
 		p->varLibre[i]=0;
+	p->infiniSol=malloc((p->nbColonne-1)*sizeof(char*));
+	for(i=0; i<p->nbColonne-1; i++)
+		p->infiniSol[i]=c;
 }
 
 /*
@@ -31,6 +37,8 @@ void allouTabMat(gauss *p){
 void libereTabMat(gauss *p){
 	free(p->matrice);
 	free(p->solution);
+	free(p->varLibre);
+	free(p->infiniSol);
 }
 
 /*
@@ -200,9 +208,9 @@ int valLibre(gauss *p){
 			if(p->matrice[i*p->nbColonne+j]==0)
 				compteurVar++;			//On incrémente compteurVar si sur la ligne on trouve une valeur qui est égale à 0
 		}
-		if(compteurVar==p->nbColonne){
+		if(compteurVar==p->nbColonne-i){
 			compteurLigne++;			//On incrémente compteLigne si toutes les valeurs d'une ligne est égale à 0
-			p->varLibre[i]++;
+			p->varLibre[i-1]++;
 		}
 		compteurVar=0;
 	}
@@ -228,19 +236,42 @@ void solution(gauss *p){
 		printf("X%d : %f\n", i+1, p->solution[i]);
 	printf("\n");
 }
-
+/*
+int checkLigneVide(gauss *p, int ligne){
+	int i, compteur=0;
+	for(i=0; i<p->nbColonne; i++){
+		if(p->matrice[i*ligne+i]==0)
+			compteur++;
+	}
+	if(compteur==p->nbColonne)
+		return 1;
+	return 0;
+}
+*/
 /*
 * Fonction infiniteSolution qui va afficher les solutions pour le système qui admet une infinité de solution.
 */
 
 void infiniteSolution(gauss *p){
-	printf("Il y a une ou plusieurs qui sont :\n");
+	printf("Il y a une ou plusieurs variables libres qui sont :\n");
 	int i;
+	char c[2];
 	for(i=0; i<p->nbColonne-1; i++){
-		if(p->varLibre[i]==1)
-			printf("X%d : %d\n", i, p->varLibre[i]);
+		if(p->varLibre[i]==1){
+			printf("X%d\n", i+1);
+			p->infiniSol[i][0]='X';
+			sprintf(c, "%d", (i));
+			p->infiniSol[i][1]=c[0];
+			p->solution[i]=0;
+		}
 	}
+	/*
+	for(i=p->nbLigne-1; i>=0; i--){
+		if(checkLigneVide(p, i)==0){
 
+		}
+	}
+	*/
 }
 
 int main(){
