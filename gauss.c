@@ -1,9 +1,8 @@
 #include<stdio.h>
 #include<stdlib.h>
-
+#define TAILLE_MAX 10
 typedef struct{
 	float *matrice;
-	float *vecteurs;
 	int nbColonne;
 	int nbLigne;
 }gauss;
@@ -13,9 +12,8 @@ typedef struct{
 */
 
 void allouTabMat(gauss *p){
-	int nbCase=p->nbColonne+p->nbLigne;
+	int nbCase=p->nbColonne*p->nbLigne;
 	p->matrice=malloc(nbCase*sizeof(float));
-	p->vecteurs=malloc(p->nbLigne*sizeof(float));
 }
 
 /*
@@ -24,7 +22,34 @@ void allouTabMat(gauss *p){
 
 void libereTabMat(gauss *p){
 	free(p->matrice);
-	free(p->vecteurs);
+}
+
+/*
+* On va afficher la matrice
+*/
+
+void affichage(gauss *p){
+	int i;
+	int caseTotal=p->nbLigne*p->nbColonne;
+	for (i=0; i<caseTotal; i++){
+		printf("%f\t", p->matrice[i]);
+		if((i+1)%p->nbColonne==0)
+			printf("\n");
+	}
+}
+
+/*
+* Cette fonction permet de récupérer les informations dans le text.txt
+*/
+
+void initMatVec(gauss *p, FILE* fichier){
+	char test[TAILLE_MAX];
+	int i, caseTotal=p->nbLigne*p->nbColonne;
+	for(i=0; i<caseTotal; i++){
+		fgets(test, TAILLE_MAX, fichier);
+		p->matrice[i]=atof(test);
+	}
+	affichage(p);
 }
 
 /*
@@ -35,14 +60,14 @@ int recupInfoColLign(gauss *p){
 	FILE* fichier = NULL;
 	char info[6];
 	char nbCol[3];
-	char nbLign[6];
+	char nbLign[3];
 	int i, j=0;
     fichier = fopen("text.txt", "r");		//Ouverture du fichier en read only
     if(fichier==NULL){
     	printf("Impossible d'atteindre le fichier! Sortie du programme.\n");	//Si le fichier n'est pas accessible alors on sort de la fonction
     	return 0;
     }
-    fgets (info, 6, fichier);		//On récupère une chaine de caractère de 5 caractères (max 2 caractère pour la colonne et pour la ligne)
+    fgets (info, TAILLE_MAX, fichier);		//On récupère une chaine de caractère de 5 caractères (max 2 caractère pour la colonne et pour la ligne)
     for(i=0; i<6; i++){				//On va mettre dans les différents chaînes de caractères les valeurs.
     	if(info[i]!=' ' && i<2)		//Si on ne rencontre pas d'expace et qu'on a déjà lu 2 caractère on met les caractères dans la chaine de caractère nbCol
     		nbCol[i]=info[i];
@@ -59,6 +84,7 @@ int recupInfoColLign(gauss *p){
     p->nbColonne=atoi(nbCol);		//On va convertir grâce à la fonction atoi() qui permet de caster une chaîne de caractère en integer. Et on va l'affecter à notre structure de donnée gauss
     p->nbLigne=atoi(nbLign);		//Même chose pour le nombre de ligne
     allouTabMat(p);
+    initMatVec(p, fichier);
     fclose(fichier);
     return 1;
 }
