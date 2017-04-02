@@ -378,11 +378,11 @@ void initialisationMenu(menu *p, int nb){
 	p->choix=malloc((p->nbChoix)*sizeof(char *));
 	int i;
 	for (i=0; i<(p->nbChoix); i++)
-		p->choix[i]=malloc(20*sizeof(char));
+		p->choix[i]=malloc(15*sizeof(char));
 	for (i=0; i<(p->nbChoix); i++)
 		p->menu[i]=i+1;
 	p->fleche[0]='>';
-	p->choix[0]="Gauss";
+	p->choix[0]="Pivot de Gauss";
 	p->choix[1]="Gauss-Jordan";
 	p->choix[2]="Quitter";
 }
@@ -546,7 +546,9 @@ int menuD(){
 				lanceGauss();
 				break;
 			case 2 :
-				printf("La fonction Gauss-Jordan est en cours de développement. Merci de patienter ...\n");
+				printf("La fonction Gauss-Jordan est en cours de développement. Merci de patienter.\nSortie de programme en cours ...\n");
+				sleep(2);
+				return 0;
 				break;
 			case 3 :
 				libereMemoire(&p);
