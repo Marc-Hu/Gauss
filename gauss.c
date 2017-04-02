@@ -136,6 +136,7 @@ int recupInfoColLign(gauss *p){
     if(p->nbColonne==0 || p->nbLigne==0){
     	printf("Le fichier que vous avez choisi n'est pas dans les normes de ce programme. \nRedirection vers le menu principal en cours...");
     	sleep(2);
+    	return 0;
     }
     allouTabMat(p);
     initMatVec(p, fichier);
@@ -171,12 +172,12 @@ char choixPivot(gauss *p, int col){
 	}
 	if (compteur==p->nbLigne-col)
 		return 'f';			//Si le compteur est au maximum c'est à dire si toutes la première colonne contient que des zéros alors on retourne 0
-	if (p->matrice[col*p->nbColonne+col]!=0)
-		return 'v';			//On retourne 1 si le premier terme de la matrice est différent de zéro
-	else{
+	//if (p->matrice[col*p->nbColonne+col]!=0)
+	//	return 'v';			//On retourne 1 si le premier terme de la matrice est différent de zéro
+	if(p->matrice[col*p->nbColonne+col]==0){
 		for(i=col+1; i<p->nbLigne; i++){
-			if(p->matrice[i*p->nbColonne]!=0){
-				permuteLigne(p, i, 0);
+			if(p->matrice[i*p->nbColonne+col]!=0){
+				permuteLigne(p, i, col);
 				return 'v';	//On retourne si on a trouvé un pivot et qu'on a permuté deux lignes.
 			}
 		}
@@ -188,9 +189,9 @@ char choixPivot(gauss *p, int col){
 * 2ème étape qui consiste à éliminer toutes les valeurs non nulles en dessous du pivot
 */
 
-void eliminationGauss(gauss *p, int colonne, int decalage){
+int eliminationGauss(gauss *p, int colonne, int decalage){
 	int i, j, decal=decalage*p->nbColonne;
-	float elimine, a, b;
+	float elimine=0, a=0, b=0;
 	for (i=colonne+1-decalage; i<p->nbLigne; i++){
 		if(p->matrice[i*p->nbColonne+colonne]!=0 && p->matrice[colonne*p->nbColonne+colonne-decal]!=0){
 			elimine=p->matrice[i*p->nbColonne+colonne]/p->matrice[colonne*p->nbColonne+colonne-decal];
@@ -198,12 +199,13 @@ void eliminationGauss(gauss *p, int colonne, int decalage){
 			b=p->matrice[colonne*p->nbColonne+colonne-decal];
 		}
 		else
-			elimine=0;
+			return 0;
 		for(j=colonne;j<p->nbColonne; j++)
 			p->matrice[i*p->nbColonne+j]=p->matrice[i*p->nbColonne+j]-elimine*p->matrice[colonne*p->nbColonne+j-decal];
 		printf("L%d = L%d+(%2.2f/%2.2f)*L%d\n", i+1, i+1, a, b, colonne+1-decalage);
 	}
 	affichage(p);
+	return 1;
 }
 
 /*
@@ -212,8 +214,10 @@ void eliminationGauss(gauss *p, int colonne, int decalage){
 
 void boucle(gauss *p){
 	int i, j=0;
+	char c;
 	for (i=0; i<p->nbColonne-1; i++){
-		if(choixPivot(p, i)=='v')
+		c=choixPivot(p, i);
+		if(c=='v')
 			eliminationGauss(p, i, j);
 		else
 			j++;
@@ -233,6 +237,7 @@ int systemIncomp(gauss *p){
 		}
 		if(compteur==p->nbColonne-1 && p->matrice[i*p->nbColonne+p->nbColonne-1]!=0)
 			return 0;		//On retourne 0 si b est différent de 0 et que toutes les autres valeurs de la ligne sont différentes de 0
+		compteur=0;
 	}
 	return 1;				//On retourne 1 si on a pas trouvé de ligne du type 0 0 0 b ou b!=0
 }
@@ -242,9 +247,13 @@ int systemIncomp(gauss *p){
 */
 
 int valLibre(gauss *p){
-	int i, j, compteurLigne=0, compteurVar=0;
+	int i, j, compteurLigne=0, compteurVar=0, compteurVarNonZero=0;
 	for(i=0; i<p->nbLigne; i++){
 		for(j=0; j<p->nbColonne; j++){
+			if(p->nbColonne>=p->nbLigne){ // On va vérifier les variables libres pour une matrice qui a plus d'inconnus que d'équation.
+				if(p->matrice[i*p->nbColonne+j]!=0)
+					compteurVarNonZero++;	//On compte les valeurs qui ne sont pas à zéro
+			}
 			if(p->matrice[i*p->nbColonne+j]==0)
 				compteurVar++;			//On incrémente compteurVar si sur la ligne on trouve une valeur qui est égale à 0
 		}
@@ -252,7 +261,12 @@ int valLibre(gauss *p){
 			compteurLigne++;			//On incrémente compteLigne si toutes les valeurs d'une ligne est égale à 0
 			p->varLibre[i-1]++;
 		}
+		if(compteurVarNonZero==3){	//Si 
+			p->varLibre[i+1]++;
+			compteurLigne++;
+		}
 		compteurVar=0;
+		compteurVarNonZero=0;
 	}
 	return compteurLigne;				//On retourne le nombre de variable libre
 }
@@ -262,9 +276,11 @@ int valLibre(gauss *p){
 */
 
 void solution(gauss *p){
-	int i, j;
+	int i, j, k=p->nbLigne;
 	float somme;
-	p->solution[p->nbColonne-2]=p->matrice[(p->nbColonne*p->nbLigne)-1]/p->matrice[(p->nbColonne*p->nbLigne)-2];	//On rempli déjà X[nbColonne-1]
+	if(k>=p->nbColonne)
+		k=p->nbColonne-1;
+	p->solution[p->nbColonne-2]=p->matrice[(p->nbColonne*k)-1]/p->matrice[(p->nbColonne*k)-2];	//On rempli déjà X[nbColonne-1]
 	for(i=p->nbColonne-3 ; i>=0 ;i--){			
            somme = 0 ;
            for(j=p->nbColonne-2; j>i; j--)
@@ -276,24 +292,13 @@ void solution(gauss *p){
 		printf("X%d : %f\n", i+1, p->solution[i]);
 	printf("\n");
 }
-/*
-int checkLigneVide(gauss *p, int ligne){
-	int i, compteur=0;
-	for(i=0; i<p->nbColonne; i++){
-		if(p->matrice[i*ligne+i]==0)
-			compteur++;
-	}
-	if(compteur==p->nbColonne)
-		return 1;
-	return 0;
-}
-*/
+
 /*
 * Fonction infiniteSolution qui va afficher les solutions pour le système qui admet une infinité de solution.
 */
 
 void infiniteSolution(gauss *p){
-	printf("Il y a une ou plusieurs variables libres qui sont :\n");
+	printf("Il y a une ou plusieurs variables libres qui est/sont :\n");
 	int i;
 	char c[2];
 	for(i=0; i<p->nbColonne-1; i++){
@@ -307,10 +312,15 @@ void infiniteSolution(gauss *p){
 	}
 }
 
+/*
+* Fonction qui va demander à l'utilisateur de choisir un fichier .txt. Il affichera tous les fichiers disponible dans le répertoire courant
+* Cette fonction vérifira que le fichier .txt tapé par l'utilisateur existe bien dans le répertoire.
+*/
+
 int choixFichier(gauss *p){
 	FILE* fich=NULL;
 	memset (p->nomFichier, 0, sizeof (p->nomFichier));
-	printf("Choisissez un fichier .txt à lire parmi les choix suivant\nNOTE : Si le .txt ne correspond pas au norme pour ce programme, vous serez immédiatement redirigé ver le menu principal.\n\nFichiers disponible dans le répertoire courant : \n");
+	printf("Choisissez un fichier .txt à lire parmi les choix suivant\nNOTE : Si le .txt ne correspond pas au norme pour ce programme, vous serez immédiatement redirigé vers le menu principal.\n\nFichiers disponible dans le répertoire courant : \n");
 	system("ls *.txt");
 	scanf("%s", p->nomFichier);
 	fich=fopen(p->nomFichier, "r");
