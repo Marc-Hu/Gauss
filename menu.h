@@ -1,5 +1,4 @@
-#ifndef BASE_H
-#define BASE_H
+
 
 #include"saisieM.c"
 #include"couleurs_terminal.c"
@@ -19,8 +18,6 @@ typedef struct{
 	int nbChoix;
 	char **choix;
 } menu;
-
-#endif
 
 void initialisationMenu(menu *p, int nb);
 void libereMemoire(menu *p);

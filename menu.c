@@ -193,8 +193,3 @@ int menuD(){
 	} 
 	return 0;
 }
-
-int main(){
-	menuD();
-	return 0;
-}

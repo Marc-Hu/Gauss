@@ -5,10 +5,18 @@
 #include"couleurs_terminal.c"
 
 #define TAILLE_MAX 10
+
+/*********************************************
+
+		PARTIE STRUCTURE DE DONNEE
+
+*********************************************/
+
 typedef struct{
 	float *matrice;
 	float *solution;
 	char **infiniSol;
+	char *nomFichier;
 	int *varLibre;
 	int nbColonne;
 	int nbLigne;
@@ -20,6 +28,20 @@ typedef struct{
 	int nbChoix;
 	char **choix;
 } menu;
+
+/*********************************************
+
+		FIN PARTIE STRUCTURE DE DONNEE
+
+*********************************************/
+
+
+/*********************************************
+
+			PARTIE PIVOT DE GAUSS
+
+*********************************************/
+
 /*
 * On va allouer dynamiquement le tableau de float matrice et vecteurs
 */
@@ -48,6 +70,7 @@ void libereTabMat(gauss *p){
 	free(p->solution);
 	free(p->varLibre);
 	free(p->infiniSol);
+	free(p->nomFichier);
 }
 
 /*
@@ -89,9 +112,9 @@ int recupInfoColLign(gauss *p){
 	char nbCol[3];
 	char nbLign[3];
 	int i, j=0;
-    fichier = fopen("text.txt", "r");		//Ouverture du fichier en read only
+    fichier = fopen(p->nomFichier, "r");		//Ouverture du fichier en read only
     if(fichier==NULL){
-    	printf("Impossible d'atteindre le fichier! Sortie du programme.\n");	//Si le fichier n'est pas accessible alors on sort de la fonction
+    	printf("Impossible d'atteindre le fichier! Retour au menu principal\n");	//Si le fichier n'est pas accessible alors on sort de la fonction
     	return 0;
     }
     fgets (info, TAILLE_MAX, fichier);		//On récupère une chaine de caractère de 5 caractères (max 2 caractère pour la colonne et pour la ligne)
@@ -110,6 +133,10 @@ int recupInfoColLign(gauss *p){
     }
     p->nbColonne=atoi(nbCol);		//On va convertir grâce à la fonction atoi() qui permet de caster une chaîne de caractère en integer. Et on va l'affecter à notre structure de donnée gauss
     p->nbLigne=atoi(nbLign);		//Même chose pour le nombre de ligne
+    if(p->nbColonne==0 || p->nbLigne==0){
+    	printf("Le fichier que vous avez choisi n'est pas dans les normes de ce programme. \nRedirection vers le menu principal en cours...");
+    	sleep(2);
+    }
     allouTabMat(p);
     initMatVec(p, fichier);
     fclose(fichier);
@@ -163,14 +190,18 @@ char choixPivot(gauss *p, int col){
 
 void eliminationGauss(gauss *p, int colonne, int decalage){
 	int i, j, decal=decalage*p->nbColonne;
-	float elimine;
+	float elimine, a, b;
 	for (i=colonne+1-decalage; i<p->nbLigne; i++){
-		if(p->matrice[i*p->nbColonne+colonne]!=0 && p->matrice[colonne*p->nbColonne+colonne-decal]!=0)
+		if(p->matrice[i*p->nbColonne+colonne]!=0 && p->matrice[colonne*p->nbColonne+colonne-decal]!=0){
 			elimine=p->matrice[i*p->nbColonne+colonne]/p->matrice[colonne*p->nbColonne+colonne-decal];
+			a=p->matrice[i*p->nbColonne+colonne];
+			b=p->matrice[colonne*p->nbColonne+colonne-decal];
+		}
 		else
 			elimine=0;
 		for(j=colonne;j<p->nbColonne; j++)
 			p->matrice[i*p->nbColonne+j]=p->matrice[i*p->nbColonne+j]-elimine*p->matrice[colonne*p->nbColonne+j-decal];
+		printf("L%d = L%d+(%2.2f/%2.2f)*L%d\n", i+1, i+1, a, b, colonne+1-decalage);
 	}
 	affichage(p);
 }
@@ -274,14 +305,51 @@ void infiniteSolution(gauss *p){
 			p->solution[i]=0;
 		}
 	}
-	/*
-	for(i=p->nbLigne-1; i>=0; i--){
-		if(checkLigneVide(p, i)==0){
-
-		}
-	}
-	*/
 }
+
+int choixFichier(gauss *p){
+	FILE* fich=NULL;
+	memset (p->nomFichier, 0, sizeof (p->nomFichier));
+	printf("Choisissez un fichier .txt à lire parmi les choix suivant\nNOTE : Si le .txt ne correspond pas au norme pour ce programme, vous serez immédiatement redirigé ver le menu principal.\n\nFichiers disponible dans le répertoire courant : \n");
+	system("ls *.txt");
+	scanf("%s", p->nomFichier);
+	fich=fopen(p->nomFichier, "r");
+	if(fich==NULL){
+		printf("Impossible d'atteindre le fichier. Vous avez peut-être fait une erreur de frappe lors de la saisie du nom du fichier. Veuillez recommencer ...\n");
+		sleep(2);
+		clear_terminal();
+		return 0;
+	}
+	fclose(fich);
+	return 1;
+}
+
+int lanceGauss(){
+	gauss p;
+	p.nomFichier=malloc(30*sizeof(char));
+	int i=choixFichier(&p);
+	while (i==0)
+		i=choixFichier(&p);
+	if(recupInfoColLign(&p)==0)
+		return 0;
+	boucle(&p);
+	if(systemIncomp(&p)==0){
+		printf("Systeme incompatible car il y a une ligne du type 0 0 0 b ou b!=0.\n");
+		return 0;
+	}
+	if(valLibre(&p)==0)
+		solution(&p);
+	else
+		infiniteSolution(&p);
+	libereTabMat(&p);
+	return 0;
+}
+
+/*********************************************
+
+			FIN PARTIE PIVOT DE GAUSS
+
+*********************************************/
 
 /*********************************************
 
@@ -468,19 +536,23 @@ int lanceMenu (menu *p){
 
 int menuD(){
 	menu p;
+	int i;
 	initialisationMenu(&p, 3);
 	affichageMenu(&p);
-	int i = lanceMenu(&p);
-	printf("Le menu selectionné est %d.\n", i);
-	switch (i){
-		case 1 : 
-			break;
-		case 2 :
-			break;
-		case 3 :
-			libereMemoire(&p);
-			return 0;
-	} 
+	while(i!=3){
+		i=lanceMenu(&p);
+		switch (i){
+			case 1 : 
+				lanceGauss();
+				break;
+			case 2 :
+				printf("La fonction Gauss-Jordan est en cours de développement. Merci de patienter ...\n");
+				break;
+			case 3 :
+				libereMemoire(&p);
+				break;
+		} 
+	}
 	return 0;
 }
 
@@ -493,19 +565,6 @@ int menuD(){
 
 
 int main(){
-	gauss p;
 	menuD();
-	if(recupInfoColLign(&p)==0)
-		return 0;
-	boucle(&p);
-	if(systemIncomp(&p)==0){
-		printf("Systeme incompatible car il y a une ligne du type 0 0 0 b ou b!=0.\n");
-		return 0;
-	}
-	if(valLibre(&p)==0)
-		solution(&p);
-	else
-		infiniteSolution(&p);
-	libereTabMat(&p);
 	return 0;
 }
