@@ -81,8 +81,8 @@ void affichage(gauss *p){
 	int i;
 	int caseTotal=p->nbLigne*p->nbColonne;
 	for (i=0; i<caseTotal; i++){
-		printf("%f\t", p->matrice[i]);
-		if((i+1)%p->nbColonne==0)
+		printf("%f\t", p->matrice[i]);		//On affiche les valeurs du tableau matrice de la structure de donnée
+		if((i+1)%p->nbColonne==0)			//Dès qu'on arrive à la fin de la ligne on effectue un retour chariot
 			printf("\n");
 	}
 	printf("\n\n");
@@ -133,14 +133,14 @@ int recupInfoColLign(gauss *p){
     }
     p->nbColonne=atoi(nbCol);		//On va convertir grâce à la fonction atoi() qui permet de caster une chaîne de caractère en integer. Et on va l'affecter à notre structure de donnée gauss
     p->nbLigne=atoi(nbLign);		//Même chose pour le nombre de ligne
-    if(p->nbColonne==0 || p->nbLigne==0){
+    if(p->nbColonne==0 || p->nbLigne==0){  		//Si le nombre de colonnes et le nombre de ligne est égale à 0 alors sa signifie que le fichier choisit ne respecte pas les normes pour ce programme
     	printf("Le fichier que vous avez choisi n'est pas dans les normes de ce programme. \nRedirection vers le menu principal en cours...");
     	sleep(2);
     	return 0;
     }
-    allouTabMat(p);
-    initMatVec(p, fichier);
-    fclose(fichier);
+    allouTabMat(p);					//Si tout c'est bien passé on va initialiser notre structure de donnée avec l'allocation dynamique de la mémoire
+    initMatVec(p, fichier);			//On va ensuite initialiser notre structure de donnée avec les valeurs qui sont dans le fichier .txt
+    fclose(fichier);				//Dès qu'on a fini de récupérer toutes les information on va fermer le fichier
     return 1;
 }
 
@@ -171,13 +171,11 @@ char choixPivot(gauss *p, int col){
 			compteur++;
 	}
 	if (compteur==p->nbLigne-col)
-		return 'f';			//Si le compteur est au maximum c'est à dire si toutes la première colonne contient que des zéros alors on retourne 0
-	//if (p->matrice[col*p->nbColonne+col]!=0)
-	//	return 'v';			//On retourne 1 si le premier terme de la matrice est différent de zéro
-	if(p->matrice[col*p->nbColonne+col]==0){
+		return 'f';			//Si le compteur est au maximum c'est à dire si toutes la colonne (col) contient que des zéros alors on retourne 0
+	if(p->matrice[col*p->nbColonne+col]==0){  //Si le compteur n'est pas au maximum et que colonne (col) est égale à zéros, sa signifie qu'on doit permuter deux lignes
 		for(i=col+1; i<p->nbLigne; i++){
 			if(p->matrice[i*p->nbColonne+col]!=0){
-				permuteLigne(p, i, col);
+				permuteLigne(p, i, col); //On permute la ligne dont la valeur n'est pas nul avec la ligne ou on doit avoir un pivot
 				return 'v';	//On retourne si on a trouvé un pivot et qu'on a permuté deux lignes.
 			}
 		}
@@ -187,13 +185,14 @@ char choixPivot(gauss *p, int col){
 
 /*
 * 2ème étape qui consiste à éliminer toutes les valeurs non nulles en dessous du pivot
+* NOTE : Fonction trop compliquer à décrire par des phrases. (Meilleur solution : dessin sur papier)
 */
 
 int eliminationGauss(gauss *p, int colonne, int decalage){
 	int i, j, decal=decalage*p->nbColonne;
 	float elimine=0, a=0, b=0;
 	for (i=colonne+1-decalage; i<p->nbLigne; i++){
-		if(p->matrice[i*p->nbColonne+colonne]!=0 && p->matrice[colonne*p->nbColonne+colonne-decal]!=0){
+		if(p->matrice[i*p->nbColonne+colonne]!=0 && p->matrice[colonne*p->nbColonne+colonne-decal]!=0){		//On vérifie que les deux cases ne sont pas nul sinon le programme efectura un 0/0
 			elimine=p->matrice[i*p->nbColonne+colonne]/p->matrice[colonne*p->nbColonne+colonne-decal];
 			a=p->matrice[i*p->nbColonne+colonne];
 			b=p->matrice[colonne*p->nbColonne+colonne-decal];
@@ -233,9 +232,9 @@ int systemIncomp(gauss *p){
 	for (i=0; i<p->nbLigne; i++){
 		for(j=0; j<p->nbColonne-1; j++){
 			if(p->matrice[i*p->nbColonne+j]==0)
-				compteur++;
+				compteur++;							//On compte le nombre de 0 dans une ligne sauf la dernière colonne
 		}
-		if(compteur==p->nbColonne-1 && p->matrice[i*p->nbColonne+p->nbColonne-1]!=0)
+		if(compteur==p->nbColonne-1 && p->matrice[i*p->nbColonne+p->nbColonne-1]!=0)	//Si la ligne contient que des 0 sauf la dernière valeur alors le système est incompatible
 			return 0;		//On retourne 0 si b est différent de 0 et que toutes les autres valeurs de la ligne sont différentes de 0
 		compteur=0;
 	}
@@ -261,11 +260,13 @@ int valLibre(gauss *p){
 			compteurLigne++;			//On incrémente compteLigne si toutes les valeurs d'une ligne est égale à 0
 			p->varLibre[i-1]++;
 		}
-		if(compteurVarNonZero==3){	//Si 
-			p->varLibre[i+1]++;
-			compteurLigne++;
+		if(p->nbColonne>=p->nbLigne){	//Si on est dans le cas ou on a plus d'inconnues que d'équations
+			if(compteurVarNonZero==3 || compteurVarNonZero==2 && p->matrice[(i+1)*p->nbColonne-1]==0){	//Si le compteur de valeur à zéro est à 3 ou à 2 et que la valeur à la dernière colonne est à 0
+				p->varLibre[i+1]++;		//Alors on a une variable libre à i+1
+				compteurLigne++;		//On incrémente le nombre de variable libre dans le programme
+			}
 		}
-		compteurVar=0;
+		compteurVar=0;					//On réinitialise les compteurs afin d'éviter d'avoir des valeurs faussées
 		compteurVarNonZero=0;
 	}
 	return compteurLigne;				//On retourne le nombre de variable libre
@@ -284,11 +285,11 @@ void solution(gauss *p){
 	for(i=p->nbColonne-3 ; i>=0 ;i--){			
            somme = 0 ;
            for(j=p->nbColonne-2; j>i; j--)
-              somme=somme+p->matrice[i*p->nbColonne+j]*p->solution[j] ;
-           p->solution[i]=(p->matrice[i*p->nbColonne+p->nbColonne-1]-somme)/p->matrice[i*p->nbColonne+i] ;
+              somme=somme+p->matrice[i*p->nbColonne+j]*p->solution[j] ;		//On fait la somme de toute les valeurs entre le pivot et la dernière colonne en multipliant ces valeur par les solutions trouvé précédemment
+           p->solution[i]=(p->matrice[i*p->nbColonne+p->nbColonne-1]-somme)/p->matrice[i*p->nbColonne+i] ;	//Puis on soustrait la valeur de la dernière colonne par la somme du dessus et on divise le tout par la valeur du pivot
     }
     printf("Solutions :\n");
-	for (i=0; i<p->nbColonne-1; i++)
+	for (i=0; i<p->nbColonne-1; i++)		//On affiche les solutions du système
 		printf("X%d : %f\n", i+1, p->solution[i]);
 	printf("\n");
 }
@@ -302,7 +303,7 @@ void infiniteSolution(gauss *p){
 	int i;
 	char c[2];
 	for(i=0; i<p->nbColonne-1; i++){
-		if(p->varLibre[i]==1){
+		if(p->varLibre[i]==1){				//Dans le cas d'une infinité de solution nous allons afficher seulement les inconnues qui sonts libres
 			printf("X%d\n", i+1);
 			p->infiniSol[i][0]='X';
 			sprintf(c, "%d", (i));
@@ -319,40 +320,44 @@ void infiniteSolution(gauss *p){
 
 int choixFichier(gauss *p){
 	FILE* fich=NULL;
-	memset (p->nomFichier, 0, sizeof (p->nomFichier));
+	memset (p->nomFichier, 0, sizeof (p->nomFichier));		//Réinitialisation de la variable p->nomFichier pour être sur qu'il ne contient rien à l'intérieur
 	printf("Choisissez un fichier .txt à lire parmi les choix suivant\nNOTE : Si le .txt ne correspond pas au norme pour ce programme, vous serez immédiatement redirigé vers le menu principal.\n\nFichiers disponible dans le répertoire courant : \n");
-	system("ls *.txt");
-	scanf("%s", p->nomFichier);
-	fich=fopen(p->nomFichier, "r");
-	if(fich==NULL){
+	system("ls *.txt");				//On affiche sur le terminal tous les fichier qui termine par .txt (Ils ne sont pas forcément tous au norme du programme)
+	scanf("%s", p->nomFichier);		//On demande à l'utilisateur de saisir le nom du fichier qu'il souhaite lire et exécuter
+	fich=fopen(p->nomFichier, "r");	//On ouvre le fichier grâce au nom que l'utilisateur à rentré
+	if(fich==NULL){					//Si le fichier n'est pas accessible
 		printf("Impossible d'atteindre le fichier. Vous avez peut-être fait une erreur de frappe lors de la saisie du nom du fichier. Veuillez recommencer ...\n");
-		sleep(2);
+		sleep(2);					//Sa veut dire que l'utilisateur a rentré un mauvais nom de fichier ou qu'il a fait une faute de frappe 
 		clear_terminal();
-		return 0;
+		return 0;					//On retourne 0 si c'est le cas
 	}
 	fclose(fich);
-	return 1;
+	return 1;						//On retourne 1 si tout c'est bien passé (cad si le fichier .txt existe et non si il est dans les normes du programme)
 }
+
+/*
+* Fonction lanceGauss qui va lancer l'algorithme de Gauss 
+*/
 
 int lanceGauss(){
 	gauss p;
-	p.nomFichier=malloc(30*sizeof(char));
-	int i=choixFichier(&p);
+	p.nomFichier=malloc(30*sizeof(char));//On alloue dynamiquement de l'espace mémoire à la chaîne de caractère p.nomFichier afin de mettre le nom du fichier à exécuter
+	int i=choixFichier(&p);				//On récupère le nom du fichier que l'utilisateur à rentré
 	while (i==0)
-		i=choixFichier(&p);
-	if(recupInfoColLign(&p)==0)
-		return 0;
-	boucle(&p);
-	if(systemIncomp(&p)==0){
-		printf("Systeme incompatible car il y a une ligne du type 0 0 0 b ou b!=0.\n");
+		i=choixFichier(&p);				//tant que le fichier n'est pas bon on lui redemande de taper le nom d'un fichier valide
+	if(recupInfoColLign(&p)==0)			//On récupère les informations du fichier
+		return 0;						//Si on a pas réussi à récupérer les données des fichiers ou si le fichier n'est pas dans les normes du programme alors on revient sur le menu principal
+	boucle(&p);							//On va effectuer l'étape n°3 de l'algorithme de gauss qui consiste à boucler
+	if(systemIncomp(&p)==0){			//On regarde si le incompatible ou non
+		printf("Systeme incompatible car il y a une ligne du type 0 0 0 b ou b!=0.\n");  //Si il est incompatible alors on affiche un message et on reviens sur le menu
 		return 0;
 	}
-	if(valLibre(&p)==0)
-		solution(&p);
+	if(valLibre(&p)==0)					//On vérifie qu'il n'y a aucunes variables libres
+		solution(&p);					//Si il y en a aucune alors on cherche les solutions
 	else
-		infiniteSolution(&p);
-	libereTabMat(&p);
-	return 0;
+		infiniteSolution(&p);			//Sinon on affiche les variables libres du système sans les calculer
+	libereTabMat(&p);					//On libère la mémoire alloué durant tout le programme
+	return 0;							//On retourne au menu principal
 }
 
 /*********************************************
