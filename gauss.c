@@ -188,20 +188,20 @@ char choixPivot(gauss *p, int col){
 * NOTE : Fonction trop compliquer à décrire par des phrases. (Meilleur solution : dessin sur papier)
 */
 
-int eliminationGauss(gauss *p, int colonne, int decalage){
-	int i, j, decal=decalage*p->nbColonne;
+int eliminationGauss(gauss *p, int col, int decalage){
+	int i, j, decal=decalage*p->nbColonne, k=p->nbColonne;
 	float elimine=0, a=0, b=0;
-	for (i=colonne+1-decalage; i<p->nbLigne; i++){
-		if(p->matrice[i*p->nbColonne+colonne]!=0 && p->matrice[colonne*p->nbColonne+colonne-decal]!=0){		//On vérifie que les deux cases ne sont pas nul sinon le programme efectura un 0/0
-			elimine=p->matrice[i*p->nbColonne+colonne]/p->matrice[colonne*p->nbColonne+colonne-decal];
-			a=p->matrice[i*p->nbColonne+colonne];
-			b=p->matrice[colonne*p->nbColonne+colonne-decal];
+	for (i=col+1-decalage; i<p->nbLigne; i++){
+		if(p->matrice[col*k+col-decal]!=0){		//On vérifie que les deux cases ne sont pas nul sinon le programme efectura un 0/0
+			elimine=p->matrice[i*k+col]/p->matrice[col*k+col-decal];
+			a=p->matrice[i*k+col];
+			b=p->matrice[col*k+col-decal];
 		}
 		else
 			return 0;
-		for(j=colonne;j<p->nbColonne; j++)
-			p->matrice[i*p->nbColonne+j]=p->matrice[i*p->nbColonne+j]-elimine*p->matrice[colonne*p->nbColonne+j-decal];
-		printf("L%d = L%d+(%2.2f/%2.2f)*L%d\n", i+1, i+1, a, b, colonne+1-decalage);
+		for(j=col;j<k; j++)
+			p->matrice[i*k+j]=p->matrice[i*k+j]-elimine*p->matrice[col*k+j-decal];
+		printf("L%d = L%d+(%2.2f/%2.2f)*L%d\n", i+1, i+1, a, b, col+1-decalage);
 	}
 	affichage(p);
 	return 1;
@@ -246,30 +246,30 @@ int systemIncomp(gauss *p){
 */
 
 int valLibre(gauss *p){
-	int i, j, compteurLigne=0, compteurVar=0, compteurVarNonZero=0;
+	int i, j, comptLigne=0, comptVar=0, comptVarNonZero=0;
 	for(i=0; i<p->nbLigne; i++){
 		for(j=0; j<p->nbColonne; j++){
 			if(p->nbColonne>=p->nbLigne){ // On va vérifier les variables libres pour une matrice qui a plus d'inconnus que d'équation.
 				if(p->matrice[i*p->nbColonne+j]!=0)
-					compteurVarNonZero++;	//On compte les valeurs qui ne sont pas à zéro
+					comptVarNonZero++;	//On compte les valeurs qui ne sont pas à zéro
 			}
 			if(p->matrice[i*p->nbColonne+j]==0)
-				compteurVar++;			//On incrémente compteurVar si sur la ligne on trouve une valeur qui est égale à 0
+				comptVar++;			//On incrémente compteurVar si sur la ligne on trouve une valeur qui est égale à 0
 		}
-		if(compteurVar==p->nbColonne-i){
-			compteurLigne++;			//On incrémente compteLigne si toutes les valeurs d'une ligne est égale à 0
+		if(comptVar==p->nbColonne-i){
+			comptLigne++;			//On incrémente compteLigne si toutes les valeurs d'une ligne est égale à 0
 			p->varLibre[i-1]++;
 		}
 		if(p->nbColonne>=p->nbLigne){	//Si on est dans le cas ou on a plus d'inconnues que d'équations
-			if(compteurVarNonZero==3 || compteurVarNonZero==2 && p->matrice[(i+1)*p->nbColonne-1]==0){	//Si le compteur de valeur à zéro est à 3 ou à 2 et que la valeur à la dernière colonne est à 0
+			if(comptVarNonZero==3 || (comptVarNonZero==2 && p->matrice[(i+1)*p->nbColonne-1]==0)){	//Si le compteur de valeur à zéro est à 3 ou à 2 et que la valeur à la dernière colonne est à 0
 				p->varLibre[i+1]++;		//Alors on a une variable libre à i+1
-				compteurLigne++;		//On incrémente le nombre de variable libre dans le programme
+				comptLigne++;		//On incrémente le nombre de variable libre dans le programme
 			}
 		}
-		compteurVar=0;					//On réinitialise les compteurs afin d'éviter d'avoir des valeurs faussées
-		compteurVarNonZero=0;
+		comptVar=0;					//On réinitialise les compteurs afin d'éviter d'avoir des valeurs faussées
+		comptVarNonZero=0;
 	}
-	return compteurLigne;				//On retourne le nombre de variable libre
+	return comptLigne;				//On retourne le nombre de variable libre
 }
 
 /*
@@ -277,19 +277,19 @@ int valLibre(gauss *p){
 */
 
 void solution(gauss *p){
-	int i, j, k=p->nbLigne;
+	int i, j, k=p->nbLigne, l=p->nbColonne;
 	float somme;
-	if(k>=p->nbColonne)
-		k=p->nbColonne-1;
-	p->solution[p->nbColonne-2]=p->matrice[(p->nbColonne*k)-1]/p->matrice[(p->nbColonne*k)-2];	//On rempli déjà X[nbColonne-1]
-	for(i=p->nbColonne-3 ; i>=0 ;i--){			
+	if(k>=l)
+		k=l-1;
+	p->solution[l-2]=p->matrice[(l*k)-1]/p->matrice[(l*k)-2];	//On rempli déjà X[nbColonne-1]
+	for(i=l-3 ; i>=0 ;i--){			
            somme = 0 ;
-           for(j=p->nbColonne-2; j>i; j--)
-              somme=somme+p->matrice[i*p->nbColonne+j]*p->solution[j] ;		//On fait la somme de toute les valeurs entre le pivot et la dernière colonne en multipliant ces valeur par les solutions trouvé précédemment
-           p->solution[i]=(p->matrice[i*p->nbColonne+p->nbColonne-1]-somme)/p->matrice[i*p->nbColonne+i] ;	//Puis on soustrait la valeur de la dernière colonne par la somme du dessus et on divise le tout par la valeur du pivot
+           for(j=l-2; j>i; j--)
+              somme=somme+p->matrice[i*l+j]*p->solution[j] ;		//On fait la somme de toute les valeurs entre le pivot et la dernière colonne en multipliant ces valeur par les solutions trouvé précédemment
+           p->solution[i]=(p->matrice[i*l+l-1]-somme)/p->matrice[i*l+i] ;	//Puis on soustrait la valeur de la dernière colonne par la somme du dessus et on divise le tout par la valeur du pivot
     }
-    printf("Solutions :\n");
-	for (i=0; i<p->nbColonne-1; i++)		//On affiche les solutions du système
+    printf("La matrice est échelonné.\nLe système est compatible.\nToutes les variables sont liées et il admet la solution suivantes :\n");
+	for (i=0; i<l-1; i++)		//On affiche les solutions du système
 		printf("X%d : %f\n", i+1, p->solution[i]);
 	printf("\n");
 }
@@ -320,7 +320,6 @@ void infiniteSolution(gauss *p){
 
 int choixFichier(gauss *p){
 	FILE* fich=NULL;
-	memset (p->nomFichier, 0, sizeof (p->nomFichier));		//Réinitialisation de la variable p->nomFichier pour être sur qu'il ne contient rien à l'intérieur
 	printf("Choisissez un fichier .txt à lire parmi les choix suivant\nNOTE : Si le .txt ne correspond pas au norme pour ce programme, vous serez immédiatement redirigé vers le menu principal.\n\nFichiers disponible dans le répertoire courant : \n");
 	system("ls *.txt");				//On affiche sur le terminal tous les fichier qui termine par .txt (Ils ne sont pas forcément tous au norme du programme)
 	scanf("%s", p->nomFichier);		//On demande à l'utilisateur de saisir le nom du fichier qu'il souhaite lire et exécuter
@@ -436,13 +435,14 @@ int flecheValide(menu *p, int a){
 
 void affichageMenu(menu *p){
 	int i; 
-	printf("Monter/descendre : flèche haut/bas; selectionner : flèche droite\n");
+	printf("/****************************\n     Algorithme de Gauss\n              by Marc Hu\n****************************/\n\n");
 	for (i=0; i<(p->nbChoix); i++){
 		if (flecheValide(p, i))
 			printf(" %c \33[34;01m%d  %s\33[00m\n", p->fleche[i], p->menu[i], p->choix[i]);
 		else
 			printf("     %d  %s\n", p->menu[i], p->choix[i]);
 	}
+	printf("\n\nMonter/descendre : flèche haut/bas; selectionner : flèche droite\n");
 }
 
 // C'est exactement la même fonction que dans le jeu
