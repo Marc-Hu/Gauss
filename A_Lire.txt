@@ -1,0 +1,38 @@
+Programme Gauss
+
+Ce programme se lance dans un environnement linux.
+
+1. Dans un terminal rentrer dans le dossier gauss
+
+2. Lancer le programme en ecrivant simplement make dans le terminal, 
+le programme compilera et se lancera automatiquement
+
+3. Un menu apparaît avec 3 choix possibles : 
+	1) Pivot de Gauss
+	2) Gauss-Jordan (pas encore fonctionnelle)
+	3) Quitter
+pour vous déplacer dans le menu vous devez utiliser les flèches 
+directionnelles haut et bas et pour selectionner la fonctionnalité 
+il faut appuyer sur la flèche directionnelle droite (Ceci est indiqué dans la menu)
+
+4. Quand vous lancez le Pivot de Gauss, 
+il vous demandera de saisir le premier fichier .txt sans l'extension 
+afin qu'il puisse récupérer les valeurs qui se trouvent dans le fichier. 
+Puis vous demandera de saisir le deuxième fichier .txt sans l'extension aussi.
+
+Rappel : le premier fichier doit contenir en première ligne le nombre de colonne 
+puis le nombre de ligne entre 2 et 99 puis les valeurs de la matrices les uns 
+en dessous des autres de la partie A, un exemple vous est fourni 
+dans le dossier (exemple1.txt). Le deuxième fichier .txt doit contenir les valeurs 
+de la matrice de la partie B, un exemple vous est fourni dans le dossier (exemple2.txt).
+
+Le programme contrôle seulement le premier fichier si il contient bien 
+le nombre de colonne et le nombre de ligne, il ne controlera pas les valeurs
+de la matrice (que sa soit la partie A ou B). 
+
+5. Le programme se lance et vous donne le résultat.
+
+6. Appuyer sur une touche puis la touche entrer pour sortir ou bien 
+appuyer seulement sur la touche entrer du clavier.
+
+7. Selectionner 3) Quitter si vous voulez quitter le programme
