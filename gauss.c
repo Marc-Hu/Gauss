@@ -303,7 +303,7 @@ void solution(gauss *p){
               somme=somme+p->matrice[i*l+j]*p->solution[j] ;		//On fait la somme de toute les valeurs entre le pivot et la dernière colonne en multipliant ces valeur par les solutions trouvé précédemment
            p->solution[i]=(p->matrice[i*l+l-1]-somme)/p->matrice[i*l+i] ;	//Puis on soustrait la valeur de la dernière colonne par la somme du dessus et on divise le tout par la valeur du pivot
     }
-    printf("La matrice est échelonné.\nLe système est compatible.\nToutes les variables sont liées et il admet la solution suivantes :\n");
+    printf("La matrice est échelonné.\nLe système est compatible.\nToutes les variables sont liées et il admet la solution suivantes :");
 	for (i=0; i<l-1; i++)		//On affiche les solutions du système
 		printf("X%d : %f\n", i+1, p->solution[i]);
 	printf("\n");
@@ -314,7 +314,7 @@ void solution(gauss *p){
 */
 
 void infiniteSolution(gauss *p){
-	printf("La matrice est échelonné.\nLe système est compatible.\nLe système admet une infinité de solution.\n Il y a une ou plusieurs variables libres qui est/sont :\n");
+	printf("La matrice est échelonné.\nLe système est compatible.\nLe système admet une infinité de solution.\n Il y a une ou plusieurs variables libres qui est/sont :");
 	int i;
 	char c[2];
 	for(i=0; i<p->nbColonne-1; i++){
@@ -335,9 +335,10 @@ void infiniteSolution(gauss *p){
 
 int choixFichier(gauss *p){
 	FILE* fich=NULL;
-	printf("Choisissez le premier fichier .txt (la partie A de la matrice) à lire parmi les choix suivant\nNOTE : Si le .txt ne correspond pas au norme pour ce programme, vous serez immédiatement redirigé vers le menu principal.\n\nFichiers disponible dans le répertoire courant : \n");
+	printf("Choisissez le premier fichier sans le .txt (la partie A de la matrice) à lire parmi les choix suivant\nNOTE : Si le .txt ne correspond pas au norme pour ce programme, vous serez immédiatement redirigé vers le menu principal.\n\nFichiers disponible dans le répertoire courant : \n");
 	system("ls *.txt");				//On affiche sur le terminal tous les fichier qui termine par .txt (Ils ne sont pas forcément tous au norme du programme)
 	scanf("%s", p->nomFichier);		//On demande à l'utilisateur de saisir le nom du fichier qu'il souhaite lire et exécuter
+	strcat(p->nomFichier, ".txt");
 	fich=fopen(p->nomFichier, "r");	//On ouvre le fichier grâce au nom que l'utilisateur à rentré
 	if(fich==NULL){					//Si le fichier n'est pas accessible
 		printf("Impossible d'atteindre le fichier. Vous avez peut-être fait une erreur de frappe lors de la saisie du nom du fichier. Veuillez recommencer ...\n");
@@ -348,8 +349,9 @@ int choixFichier(gauss *p){
 	fclose(fich);
 	fich=NULL;
 	while(fich==NULL){
-		printf("Choisissez le deuxième fichier .txt\n");
+		printf("Choisissez le deuxième fichier sans le .txt\n");
 		scanf("%s", p->nomFichier2);
+		strcat(p->nomFichier2, ".txt");
 		fich=fopen(p->nomFichier2, "r");
 		if(fich==NULL)
 			printf("Impossible d'atteindre le fichier. Vous avez peut-être fait une erreur de frappe lors de la saisie du nom du fichier. Veuillez recommencer ...\n");
@@ -363,6 +365,7 @@ int choixFichier(gauss *p){
 */
 
 int lanceGauss(){
+	char c;
 	gauss p;
 	p.nomFichier=malloc(30*sizeof(char));//On alloue dynamiquement de l'espace mémoire à la chaîne de caractère p.nomFichier afin de mettre le nom du fichier à exécuter
 	p.nomFichier2=malloc(30*sizeof(char));
@@ -380,6 +383,9 @@ int lanceGauss(){
 		solution(&p);					//Si il y en a aucune alors on cherche les solutions
 	else
 		infiniteSolution(&p);			//Sinon on affiche les variables libres du système sans les calculer
+	printf("\n\n\nAppuyer sur une touche puis sur la touche entrer pour sortir ou bien appuyer juste sur la touche entrer.");
+	scanf("%c", &c);
+	getchar();
 	libereTabMat(&p);					//On libère la mémoire alloué durant tout le programme
 	return 0;							//On retourne au menu principal
 }
